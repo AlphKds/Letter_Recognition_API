@@ -19,13 +19,58 @@ def allowed_file(filename):
 model = load_model(app.config['MODEL_FILE'], compile=False)
 
 def preprocess_image(image_path):
-    img = Image.open(image_path).convert("L")  
-    img = img.resize((32, 32))
-    img_array = np.asarray(img)
-    img_array = np.expand_dims(img_array, axis=0)
-    img_array = np.expand_dims(img_array, axis=-1)  
-    img_array = img_array / 255.0 
-    return img_array
+    img = cv2.imread(image_path)
+    img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    img_blurred = cv2.GaussianBlur(img_gray, (5, 5), 0)
+    img_edged = cv2.Canny(img_blurred, 30, 150)
+    img_contours = cv2.findContours(img_edged.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    img_contours = imutils.grab_contours(img_contours)
+    img_contours = sort_contours(img_contours, method="left-to-right")[0]
+    chars = []
+
+    for c in img_contours:
+        (x, y, w, h) = cv2.boundingRect(c)
+
+        if (w >= 5 and w <= 150) and (h >= 15 and h <= 120):
+            img_roi = img_gray[y:y+h, x:x+w]
+            thresh = cv2.threshold(
+                img_roi, 0, 255,
+                cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)[1]
+
+            (tH, tW) = thresh.shape
+
+            if tW > tH:
+                thresh = imutils.resize(thresh, width=32)
+            else:
+                thresh = imutils.resize(thresh, height=32)
+
+            (tH, tW) = thresh.shape
+            dX = int(max(0, 32-tW) / 2.0)
+            dY = int(max(0, 32-tH) / 2.0)
+
+            img_padded = cv2.copyMakeBorder(thresh,
+                                            top=dY,
+                                            bottom=dY,
+                                            left=dX,
+                                            right=dX,
+                                            borderType=cv2.BORDER_CONSTANT,
+                                            value=(0, 0, 0))
+            img_padded = cv2.resize(img_padded, (32, 32))
+            img_padded = img_padded.astype("float32") / 255.0
+            img_padded = np.expand_dims(img_padded, axis=-1)
+            chars.append((img_padded, (x, y, w, h)))
+
+    boxes = [b[1] for b in chars]
+    chars = np.array([c[0] for c in chars], dtype="float32")
+
+    return boxes, chars
+
+    # img = img.resize((32, 32))
+    # img_array = np.asarray(img)
+    # img_array = np.expand_dims(img_array, axis=0)
+    # img_array = np.expand_dims(img_array, axis=-1)  
+    # img_array = img_array / 255.0 
+    # return img_array
 
 def predict_letter(image_path):
     processed_image = preprocess_image(image_path)
