@@ -73,11 +73,26 @@ def preprocess_image(image_path):
     # return img_array
 
 def predict_letter(image_path):
-    processed_image = preprocess_image(image_path)
-    prediction = model.predict(processed_image)
-    predicted_class = np.argmax(prediction)
-    predicted_letter = chr(ord('A') + predicted_class)
-    return predicted_letter
+    boxes, chars = preprocess_image(image_path)
+    prediction = model.predict(chars)
+    
+    letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    labels = [l for l in letters ]
+    
+    output = ""
+    
+    for (pred, (x, y, w, h)) in zip(prediction, boxes):
+        i = np.argmax(pred)
+        prob = pred[i]
+        label = labels[i]
+        print(label, ': ', prob)
+        if prob > 0.85:
+            output += label
+
+    # predicted_class = np.argmax(prediction)
+    # predicted_letter = chr(ord('A') + predicted_class)
+    print(output)
+    return output
 
 @app.route("/")
 def index():
