@@ -1,9 +1,12 @@
 import os
 import numpy as np
 from flask import Flask, jsonify, request
-from PIL import Image
+# from PIL import Image
 from keras.models import load_model
 from werkzeug.utils import secure_filename
+import cv2
+import imutils
+from imutils.contours import sort_contours
 
 app = Flask(__name__)
 app.config['ALLOWED_EXTENSIONS'] = set(['png', 'jpg', 'jpeg'])
