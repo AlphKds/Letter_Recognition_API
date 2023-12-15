@@ -53,6 +53,7 @@ env:
   GAR_LOCATION: asia-southeast2 # TODO: update Artifact Registry location
   SERVICE: ocr-api # TODO: update Cloud Run service name
   REGION: asia-southeast2 # TODO: update Cloud Run service region
+  SHA: "${{ github.sha }}"
 
 jobs:
   deploy:
@@ -94,8 +95,8 @@ jobs:
 
       - name: Build and Push Container
         run: |-
-          docker build -t "${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.SERVICE }}:${{ github.sha }}" ./
-          docker push "${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.SERVICE }}:${{ github.sha }}"
+          docker build -t "${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.SERVICE }}:${{ env.SHA }}" ./
+          docker push "${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.SERVICE }}:${{ env.SHA }}"
 
       # END - Docker auth and build
 
