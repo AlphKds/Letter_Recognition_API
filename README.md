@@ -1,4 +1,4 @@
-# OCR API
+# Letter Recognition API
 
 ## Requirements
 - Python3 
